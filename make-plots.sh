@@ -10,8 +10,8 @@ setenv plot_dir    "/Users/pel/Documents/publications/journal/2015-MWR-physgrid/
 #setenv plot_dir    "/glade/scratch/pel/new_ape/final/new_analysis/plots"
 #setenv pdf_dir    "/glade/scratch/pel/new_ape/final/new_analysis/pdf-data"
 
-setenv nlon  240
-setenv nlat  120
+setenv nlon  360
+setenv nlat  180
 setenv avetime "30-months"
 #setenv computePDF_PRECT 0  #do not compute PDF
 setenv computePDF_PRECT 1   #compute PDF
@@ -44,7 +44,9 @@ endif
 #setenv all_cases_ncl_list  "(/"\"""
 #foreach case (NE30NP4_APE NE30NP4NC2_APE NE30NP4NC3_APE NE30NP4NC4_APE)
 foreach case ($cases)
-
+  if (-e abnormal_ext) then
+    rm abnormal_ext
+  endif
   #*********************************************
   #
   # average data
