@@ -10,8 +10,8 @@ setenv plot_dir    "/Users/pel/Documents/publications/journal/2015-MWR-physgrid/
 #setenv plot_dir    "/glade/scratch/pel/new_ape/final/new_analysis/plots"
 #setenv pdf_dir    "/glade/scratch/pel/new_ape/final/new_analysis/pdf-data"
 
-setenv nlon  360
-setenv nlat  180
+setenv nlon  240
+setenv nlat  120
 setenv avetime "30-months"
 #setenv computePDF_PRECT 0  #do not compute PDF
 setenv computePDF_PRECT 1   #compute PDF
