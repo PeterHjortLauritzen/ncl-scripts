@@ -4,20 +4,13 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
 load "$my_ncl_dir/contour-levels.ncl"
 begin
   system("touch abnormal_exit_zonal_time_avg") 
-;  l2d = True
-;  vname = "PS"
-;  vname = "PRECT"
-;  vname = "CLDTOT"
-;  vname = "ALBEDO"
-
   print(lsArg)
   print("Case="+case)
-;  fnames =  systemfunc("ls "+lsArg)
-;  print("lsArg"+lsArg)
 
+  pi = 4.*atan(1.0)
 
   fnames=lsArg
-;  stop
+
   print(fnames)
   fnum_files = dimsizes(fnames)
   output_format = "pdf"
@@ -50,11 +43,16 @@ begin
   nrank =dimsizes(dNames)               ; determine the number of dimensions
   print("dnames "+dNames)
   l2d=True
-  do jj=0,nrank-1
-     if(str_lower(dNames(jj)).eq."lev") then
-       l2d=False
-     end if
-  end do
+  if (vname.eq."ALBEDO") then
+    ; since ALBEDO is a derived variable we need this if-statement
+    l2d=True
+  else
+    do jj=0,nrank-1
+       if(str_lower(dNames(jj)).eq."lev") then
+         l2d=False
+       end if
+    end do
+  end if
   print("xxxxxxxx")
   print("variable is 2D? "+l2d)
 
@@ -71,7 +69,7 @@ begin
   gsn_define_colormap(wks,"BlWhRe")                ; choose colormap
 
   if (l2d) then
-    color_list = (/"red","blue","green","purple"/) ;  "orange","red","blue","green","purple"
+;    line_colors_list = (/"red","blue","green","purple"/) ;  "orange","red","blue","green","purple"
 
     ;
     ;  zonal average plot 2d
@@ -83,8 +81,8 @@ begin
     resxy@gsnFrame = False
 ;    resxy@tiMainString   = vname+" "+case
     resxy@tiXAxisString  = "latitude"
-    resxy@xyLineColors   = color_list
-    thck = 2.0
+    resxy@xyLineColors   = line_colors
+    thck = 4.0
     resxy@xyLineThicknesses = (/thck,thck,thck,thck,thck,thck,thck,thck/)
     resxy@xyMonoDashPattern = True
     do k=0,fcnt-1
@@ -93,7 +91,7 @@ begin
       if (vname.eq."ALBEDO") then
         solin =f->SOLIN(0,:,:)
         fsnt  =f->FSNT (0,:,:)
-        alb = (solin-fsnt)/(fsnt+1.e-5)
+        alb = (solin-fsnt)/(fsnt+1.d-5)
         varll = dim_avg_Wrap(alb)
         var2d = alb
       else
@@ -105,6 +103,7 @@ begin
       p2d(k,:,:) = var2d
       delete(varll)
     end do 
+    lat = f->lat
 
     if (vname.eq."PRECT") then 
       pll              = 1000.0*24.0*3600.0*pll ;convert from m/s to mm/day
@@ -129,35 +128,50 @@ begin
 
 
     if (plot_lat_section) then
-      resxy@trXMinF=plot_lat_section_min
-      resxy@trXMaxF=plot_lat_section_max
-      resxy@trXReverse    = True                        ; reverse X axis
+      if (lsinx) then
+        resxy@trXMinF=sin(plot_lat_section_min*pi/180.)
+        resxy@trXMaxF=sin(plot_lat_section_max*pi/180.)
+
+        resxy@tmXBMode = "Explicit"    ; with sine lat and hemispheric
+        resxy@tmXBLabels = (/"0",""  ,"20","",  "40","",  "60","",  "80" /)
+        resxy@tmXBValues = (/ 0., 10., 20. ,30., 40., 50., 60., 70., 80. /)
+        resxy@tmXBMinorValues = (/10., 20., 30., 50., 60., 70., 90. /)
+        resxy@tmXBValues = sin((resxy@tmXBValues)*pi/180.)
+        resxy@tmXBMinorValues = sin((resxy@tmXBMinorValues)*pi/180.)
+      else
+        resxy@trXMinF=plot_lat_section_min
+        resxy@trXMaxF=plot_lat_section_max
+      end if
+        resxy@trXReverse    = True                        ; reverse X axis
     end if
 
-    plot = gsn_xy(wks,fall[0]&lat,pll(:,:),resxy)
+;    resxy@sfXArray = sin(lat*pi/180.)
 
-   ; 
-   ; Legend
-   ;
-   lgres = True
-   lgres@pmLegendDisplayMode    = "Always"            ; turn on legend
+    if (lsinx) then
+      plot = gsn_xy(wks,sin(fall[0]&lat*pi/180.0),pll(:,:),resxy)
+    else
+      plot = gsn_xy(wks,fall[0]&lat,pll(:,:),resxy)
+    end if
 
- ;  resxy@pmLegendSide           = "Left"               ; Change location of 
-   lgres@lgTitleAngleF = 90.0
-   lgres@xyExplicitLegendLabels = case
-   lgres@lgAutoManage = False
-   lgres@lgLabelFontHeightF = 0.3
+    ; 
+    ; Legend
     ;
-    ; Legends
-    ;
-    lgres@vpWidthF           = 0.20                   ; width of legend (NDC)
-    lgres@vpHeightF          = 0.14                   ; height of legend (NDC)
+    lgres = True
+    lgres@pmLegendDisplayMode    = "Always"            ; turn on legend
+
+  ;  resxy@pmLegendSide           = "Left"               ; Change location of 
+    lgres@lgTitleAngleF = 90.0
+    lgres@xyExplicitLegendLabels = case
+    lgres@lgAutoManage = False
+    lgres@lgLabelFontHeightF = 0.3
+    lgres@vpWidthF           = 0.24                   ; width of legend (NDC)
+    lgres@vpHeightF          = 0.16                   ; height of legend (NDC)
     lgres@lgPerimOn          = False                 ; turn off perimeter
-    lgres@lgLineColors       = color_list
+    lgres@lgLineColors       = line_colors
     lgres@lgDashIndexes      = (/0,0,0,0,0,0,0,0,0,0,0,0/)              ; dash indexes
-    lgres@lgLineLabelStrings = (/"","","","","","","",""/)             ; no labels in lines
-
-    gsn_legend_ndc(wks,4,case,0.25,0.55,lgres)
+    lgres@lgLineThicknessF = 4.0
+    lgres@pmLegendParallelPosF = 1.4
+    gsn_legend_ndc(wks,dimsizes(case),case,0.25,0.55,lgres)
 
     frame(wks)
 

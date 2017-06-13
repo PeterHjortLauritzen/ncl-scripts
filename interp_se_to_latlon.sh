@@ -1,14 +1,28 @@
 #!/bin/tcsh
-setenv root        "/Users/pel/Documents/publications/journal/physicsGrid/new-ullrich-interp/idealized-map-tests"
-setenv data_dir    $root/data
-setenv interp_dir  $root/interp-data
-setenv my_ncl_dir  "/Users/pel/Documents/ncl_scripts"
-setenv work_dir    $root/work
-setenv plot_dir    $root/plots
+if ( "$#argv" != 2) then
+  echo "Wrong number of arguments specified:"
+  echo "  -arg 1 is run case"
+  echo "  -arg 2 is history file number (e.g., h0)"
+  exit
+endif
+set n = 1
+set case = "$argv[$n]"
+set n = 2
+set hn = "$argv[$n]"
+#set root = "/scratch/cluster/pel"
+set root = "/glade/scratch/pel"
+set data_dir = "$root/$case/run"
+set interp_dir =  "$root//$case/run/interp-data"
+#setenv my_ncl_dir  "/home/pel/ncl_scripts"
+setenv my_ncl_dir  "/glade/u/home/pel/ncl_scripts"
+set work_dir  =  "$root/$case/run/work"
+set plot_dir  =  "$root/$case/run/plots"
 
-setenv nlon  360
-setenv nlat  180
-setenv interp_method "patch" #billinear
+
+
+set nlon  = 360
+set nlat  = 180
+set interp_method = "bilinear" #patch
 echo ""
 echo "------------------------------------------------------------"
 echo "This script interpolates the user specified cases located in"
@@ -26,7 +40,7 @@ echo ""
 #
 # $case.nc will be interpolated to latitude-longitude grid
 #
-set cases = ( "default" "mono" "non-consistent-non-mono" "non-mono" )
+set cases = ( "$case.$hn" )
 #
 # DO NOT EDIT BELOW
 #
@@ -61,3 +75,12 @@ foreach case ($cases)
     endif
   end
 end
+unset n
+unset case
+unset n 
+unset hn 
+unset root 
+unset data_dir 
+unset interp_dir
+unset work_dir
+unset plot_dir

@@ -5,7 +5,6 @@ load "$my_ncl_dir/ESMF_regridding.ncl"
 
 begin
   system("touch abnormal_exit") 
-
   ;nx           =240
   ;ny           =120
   ; Get the list of filenames
@@ -17,7 +16,7 @@ begin
   Fnum=dimsizes(Flist)
   print("Number of Files to process="+Fnum)
   print(Flist)
-
+  print("xxxxxxxxxx")
   ; Loop over and regrid each file
   ;--------------------------------
   do nn=0,(Fnum-1)
@@ -48,9 +47,13 @@ begin
     ;
     vdims = getvardims(src_file)   
     physGrid = False
+    gll_vars=False
     do jj=0,dimsizes(vdims)-1
       if(str_lower(vdims(jj)).eq."ncol_d") then
           physGrid=True
+      end if
+      if(str_lower(vdims(jj)).eq."ncol") then
+          gll_vars=True
       end if
     end do
 
@@ -73,7 +76,11 @@ begin
         Opt@PrintTimings  =True
         Opt@Title         ="SE physics Grid"  
         Opt@Debug         =False ; True
-        unstructured_to_ESMF(srcGridName,src_file->lat,src_file->lon,Opt)
+        if (gll_vars) then        
+          unstructured_to_ESMF(srcGridName,src_file->lat,src_file->lon,Opt)
+        else
+          unstructured_to_ESMF(srcGridName,src_file->lat_d,src_file->lon_d,Opt)
+        end if
         delete(Opt)
       end if
       if(isfilepresent(srcGridName2)) then
@@ -202,13 +209,14 @@ begin
     ; 5. Apply the weights to the data you want to regrid.
     ;----------------------------------------------------------------------
     Opt             =True
-    Opt@Debug       =False ; True
+    Opt@Debug       =True
     Opt@PrintTimings=True
     Opt@SrcESMF     =True   
  
     ; select all the variables in the file
     ;----------------------------------------------------------------------
     vname = getfilevarnames(src_file)    
+    print("vname  "+vname)
     do ii=0,dimsizes(vname)-1
  
       ; Skip variables that do not apply
@@ -234,6 +242,7 @@ begin
         newlatdim=-999
         newlondim=-999
         if(str_lower(dNames(jj)).eq."ncol") then
+;        if(str_lower(dNames(jj)).eq."grid_size") then
           remapvar=True
           remap_gll=False
           newlatdim=jj
